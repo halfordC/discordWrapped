@@ -1,0 +1,12 @@
+﻿  DiscordServerStats.cpp
+F:\Files\Repos\DiscordWrappedBot\DiscordWrappedBot\DiscordServerStats.cpp(45,70): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+F:\Files\Repos\DiscordWrappedBot\DiscordWrappedBot\DiscordServerStats.cpp(52,70): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+F:\Files\Repos\DiscordWrappedBot\DiscordWrappedBot\DiscordServerStats.cpp(53,67): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+F:\Files\Repos\DiscordWrappedBot\DiscordWrappedBot\DiscordServerStats.cpp(56,65): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+F:\Files\Repos\DiscordWrappedBot\DiscordWrappedBot\DiscordServerStats.cpp(57,60): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+F:\Files\Repos\DiscordWrappedBot\DiscordWrappedBot\DiscordServerStats.cpp(58,53): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+F:\Files\Repos\DiscordWrappedBot\DiscordWrappedBot\DiscordServerStats.cpp(62,76): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+F:\Files\Repos\DiscordWrappedBot\DiscordWrappedBot\DiscordServerStats.cpp(63,61): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+F:\Files\Repos\DiscordWrappedBot\DiscordWrappedBot\DiscordServerStats.cpp(64,57): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+F:\Files\Repos\DiscordWrappedBot\DiscordWrappedBot\DiscordServerStats.cpp(68,6): warning C4101: 'postReactionTag': unreferenced local variable
+  DiscordWrappedBot.vcxproj -> F:\Files\Repos\DiscordWrappedBot\x64\Debug\DiscordWrappedBot.exe
