@@ -1,0 +1,1 @@
+A tool for taking discord logs downloaded from an external tool, and creating a simple "wrapped" style text output for it. 
