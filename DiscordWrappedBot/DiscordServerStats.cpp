@@ -44,6 +44,14 @@ void DiscordServerStats::printResults()
 
 void DiscordServerStats::addMessage(std::string inLine)
 {
+
+	/*Changes to make:
+	* We need to take in each HTML tag / line, and parse acordingly. 
+	* basically, we need to make a destructive parser that returns the current element. 
+	* We can have a big div counter, that counts our div scope. 
+	* and as we come across all tags, we can mark what they are for. 
+	* we can create a post according to what we find in the tags. 
+	*/
 	postType_t currentPost = text;
 
 	size_t usernameLocationTag = inLine.find("<span class=chatlog__author");
