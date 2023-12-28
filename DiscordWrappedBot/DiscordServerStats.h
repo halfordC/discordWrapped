@@ -1,22 +1,29 @@
 #pragma once
 #include "DiscordMessage.h"
 
+typedef enum 
+{
+	usernameTag,
+	dateTimeTag,
+	messageTextTag,
+	messageImageTag,
+	messageReactionTag,
+	messageReactionCountTag,
+	unknownTag,
+	ignoreTag,
+}tagType;
+
 class DiscordServerStats
 {
 public:
 	DiscordServerStats();
 	void filterYear(int inYear);
-	void findTopTenPosters();
-	void findtop5HCMusicPosters();
-	void findtop5MusicPosters();
-	void findpromoterWithMostFlyers();
-	void findtop3ReactedMessages();
-	void findtop3MemeLords();
-	void findtop3Reactions();
 
 	void printResults();
 	void addMessage(std::string inLine); //we'll do all of our line parsing in here. 
 	void changeChannel(std::string inChannel);
+	std::string getHtmlTag(std::string inHTMLBlock);
+	tagType processTag(std::string inHTMLTag);
 
 private:
 	std::vector<DiscordMessage*> allMessages;
@@ -30,7 +37,6 @@ private:
 	std::vector<std::string> top3Reactions;
 
 	std::string currentChannel;
-
-	bool newLineFlag;
+	std::vector<std::string> tagStack;
 };
 

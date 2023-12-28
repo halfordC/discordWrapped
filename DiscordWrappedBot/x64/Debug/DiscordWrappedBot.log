@@ -1,3 +1,4 @@
 ﻿  DiscordServerStats.cpp
-C:\Files\repos\DiscordWrapped\discordWrapped\DiscordWrappedBot\DiscordServerStats.cpp(119,27): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Files\repos\DiscordWrapped\discordWrapped\DiscordWrappedBot\DiscordServerStats.cpp(31,6): warning C4101: 'currentReactionCount': unreferenced local variable
+C:\Files\repos\DiscordWrapped\discordWrapped\DiscordWrappedBot\DiscordServerStats.cpp(42,7): warning C4101: 'j': unreferenced local variable
   DiscordWrappedBot.vcxproj -> C:\Files\repos\DiscordWrapped\discordWrapped\x64\Debug\DiscordWrappedBot.exe
