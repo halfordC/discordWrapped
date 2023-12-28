@@ -4,8 +4,9 @@
 #include <iostream>
 
 typedef enum {
-	text
-
+	text,
+	link,
+	image,
 }postType_t;
 
 

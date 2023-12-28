@@ -39,8 +39,25 @@ int main(int argc, char** argv)
                 std::string line;
                 while (getline(currentFile, line))
                 {
-                    if (line.find("<div class=chatlog__message-group>") != -1)
+                    size_t chanelLocation = line.find("<div class=preamble__entry>");
+                    if ( chanelLocation != std::string::npos) 
                     {
+                        chanelLocation = line.find("<div class=preamble__entry>", chanelLocation+1);
+                        //make substring of this line, and send this to stats object
+                        int chanelLocationEnd = line.find("</div>", chanelLocation);
+                        std::string channelFound = line.substr(chanelLocation+27, chanelLocationEnd-(chanelLocation+27));
+                        myStats->changeChannel(channelFound);
+                    }
+                    else if (line.find("<div class=chatlog__message-group>") != -1)
+                    {
+                        //we still need to make sure that we have the full message. 
+                        while (line.find("</div></div></div></div>") == -1) 
+                        {
+                            std::string tempString;
+                            getline(currentFile, tempString);
+                            line = line.append(tempString);
+                            //keep grabing lines until we have reached the end of the message. 
+                        }
                         //we have found a message.
                         myStats->addMessage(line);
 
