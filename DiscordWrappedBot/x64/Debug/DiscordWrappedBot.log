@@ -1,4 +1,3 @@
 ﻿  DiscordServerStats.cpp
-C:\Files\repos\DiscordWrapped\discordWrapped\DiscordWrappedBot\DiscordServerStats.cpp(31,6): warning C4101: 'currentReactionCount': unreferenced local variable
-C:\Files\repos\DiscordWrapped\discordWrapped\DiscordWrappedBot\DiscordServerStats.cpp(42,7): warning C4101: 'j': unreferenced local variable
+C:\Files\repos\DiscordWrapped\discordWrapped\DiscordWrappedBot\DiscordServerStats.cpp(53,7): warning C4101: 'j': unreferenced local variable
   DiscordWrappedBot.vcxproj -> C:\Files\repos\DiscordWrapped\discordWrapped\x64\Debug\DiscordWrappedBot.exe

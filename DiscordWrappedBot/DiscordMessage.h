@@ -13,15 +13,16 @@ typedef enum {
 class DiscordMessage
 {
 public:
-	DiscordMessage( std::string inUsername, std::string inDateTime, std::string inPostContent, std::string inChannelPosted, postType_t inPostType);
+	DiscordMessage();
 	void addReactions(std::string inReaction);
-
-private:
 	std::string userName;
 	std::string dateTime;
 	std::string postContent;
 	std::string channelPosted;
 	postType_t postType;
+
+private:
+
 	std::vector<std::string> postReactions;
 };
 

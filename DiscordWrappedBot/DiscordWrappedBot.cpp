@@ -50,21 +50,23 @@ int main(int argc, char** argv)
                     }
                     else if (line.find("<div class=chatlog__message-group>") != -1)
                     {
-                        //we still need to make sure that we have the full message. 
-                        while (line.find("</div></div></div></div>") == -1) 
+                        //we still need to make sure that we have the full message.
+                        std::string divLine = line.substr(line.size() - 24, 24);
+                        std::string compString = "</div></div></div></div>";
+                        while (divLine != compString) 
                         {
                             std::string tempString;
                             getline(currentFile, tempString);
                             line = line.append(tempString);
                             //keep grabing lines until we have reached the end of the message. 
+
+                            divLine = line.substr(line.size() - 24, 24);
                         }
                         //we have found a message.
                         myStats->addMessage(line);
 
                     }
                 }
-
-
 
             }
 
@@ -80,4 +82,6 @@ int main(int argc, char** argv)
     * 4. Count up all of our data structure based on requirnments
     
     */
+    std::cout << "program complete!" << std::endl;
+
 }

@@ -11,6 +11,8 @@ typedef enum
 	messageReactionCountTag,
 	unknownTag,
 	ignoreTag,
+	ignoreNextTag,
+	mentionTag,
 }tagType;
 
 class DiscordServerStats

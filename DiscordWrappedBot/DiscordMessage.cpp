@@ -1,12 +1,12 @@
 #include "DiscordMessage.h"
 
-DiscordMessage::DiscordMessage(std::string inUsername, std::string inDateTime, std::string inPostContent, std::string inChannelPosted, postType_t inPostType)
+DiscordMessage::DiscordMessage()
 {
-	userName = inUsername;
-	dateTime = inDateTime;
-	postContent = inPostContent;
-	channelPosted = inChannelPosted;
-	postType = inPostType;
+	userName = "";
+	dateTime = "";
+	postContent = "";
+	channelPosted = "";
+	postType = text;
 }
 
 void DiscordMessage::addReactions(std::string inReaction)

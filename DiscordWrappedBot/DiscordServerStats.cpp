@@ -23,10 +23,12 @@ void DiscordServerStats::addMessage(std::string inLine)
 	* and as we come across all tags, we can mark what they are for. 
 	* we can create a post according to what we find in the tags. 
 	*/
+
+	DiscordMessage* insertMessage = new DiscordMessage();
 	postType_t currentPost = text;
 	std::string messageUserName;
 	std::string messageDateTime;
-	std::string messageContent;
+	std::string messageContent = "";
 	std::string currentReaction;
 	int currentReactionCount;
 
@@ -37,7 +39,16 @@ void DiscordServerStats::addMessage(std::string inLine)
 		size_t tagSize = currentTag.size();
 		inLine = inLine.substr(tagSize, inLine.size() - tagSize);
 
+		if (currentTag == " ") 
+		{
+			currentTag = getHtmlTag(inLine);
+			tagSize = currentTag.size();
+			inLine = inLine.substr(tagSize, inLine.size() - tagSize);
+		}
+
+
 		tagType currentTagType = processTag(currentTag);
+
 
 		int j;
 		switch (currentTagType) 
@@ -60,28 +71,111 @@ void DiscordServerStats::addMessage(std::string inLine)
 			break;
 
 		case messageTextTag:
+		{
+			std::string catString = getHtmlTag(inLine);
+			if (catString == "</a>") 
+			{
+				//if we see an Atag, there may be a link in it that is part of a message. 
+				processTag(catString);
+				break;
+			}
+			else if (catString.find("<span") != -1)
+			{
+				//This is a mention in a message. 
+				tagType possibleMention = processTag(catString);
+				if (possibleMention == mentionTag) 
+				{
+					tagSize = catString.size();
+					inLine = inLine.substr(tagSize, inLine.size() - tagSize);
+					catString = getHtmlTag(inLine);
+				}
+
+			}
+			messageContent = messageContent + " " + catString;
+			tagSize = catString.size();
+			inLine = inLine.substr(tagSize, inLine.size() - tagSize);
+		}
 			break;
-			//img tag could be avatar image. We want to ignore those and not add them to the message. 
-		case messageImageTag:
+
+			 
+		case messageImageTag:{
+			if (currentTag.find("<video") != -1)
+			{
+				std::string sourceString = getHtmlTag(inLine);
+				tagSize = sourceString.size();
+				size_t urlStart = sourceString.find("src=");
+				size_t urlEnd = sourceString.find("alt");
+				std::string catString = sourceString.substr(urlStart+4, urlEnd - (urlStart+4));
+				messageContent = messageContent + " " + catString;
+				inLine = inLine.substr(tagSize, inLine.size() - tagSize);
+			}
+			else 
+			{
+				std::string catString;
+				size_t urlStart = currentTag.find("src=");
+				size_t urlEnd = currentTag.find("alt", urlStart);
+				catString = currentTag.substr(urlStart + 4, urlEnd - (urlStart + 4));
+				messageContent = messageContent + " " + catString;
+			}
+
+
+		}
 			break;
 
 		case messageReactionTag:
+		{
+			size_t reactionNameStart = currentTag.find("title=");
+			size_t reactionNameEnd = currentTag.find(">");
+			currentReaction = currentTag.substr(reactionNameStart+6, reactionNameEnd - (reactionNameStart+6));
+		}			
 			break;
 
 		case messageReactionCountTag:
+		{
+			std::string value = getHtmlTag(inLine);
+			currentReactionCount = stoi(value);
+			tagSize = value.size();
+			inLine = inLine.substr(tagSize, inLine.size() - tagSize);
+
+			//Then do our insert loop
+			for (int i = 0; i<currentReactionCount; i++) 
+			{
+				insertMessage->addReactions(currentReaction);
+			}
+		}
+			break;
+
+		case mentionTag:
+			{
+				std::string catString = getHtmlTag(inLine);
+				messageContent = messageContent + " " + catString;
+				tagSize = catString.size();
+				inLine = inLine.substr(tagSize, inLine.size() - tagSize);
+			}
 			break;
 
 		case unknownTag:
-			if (currentTag == " ")
+			if (tagStack.back() == "<span class=chatlog__markdown-preserve>")
 			{
-				//we can ignore spaces, they're just in here sometimes. Not sure why. we don't care about white space between tags.
+				messageContent = messageContent + " " + currentTag;
 				break;
+				//this is the rest of a message after a mention. Hacky, but should work. 
 			}
-			std::cout << "unknown tag encountered" << std::endl;
+			std::cout << "unknown tag encountered: ";
+			std::cout << currentTag << std::endl;
+			std::cout << messageDateTime << std::endl;
 			return;
 			break;
 
 		case ignoreTag:
+			break;
+
+		case ignoreNextTag:
+		{ //the element after the edit tag must be skipped
+			std::string skipTag = getHtmlTag(inLine); //we expect this to be an <a> tag that we do not care about
+			tagSize = skipTag.size();
+			inLine = inLine.substr(tagSize, inLine.size() - tagSize);
+		}
 			break;
 
 		default:
@@ -91,119 +185,12 @@ void DiscordServerStats::addMessage(std::string inLine)
 
 	}
 
-	DiscordMessage* insertMessage = new DiscordMessage(messageUserName, messageDateTime, messageContent, currentChannel, currentPost);
-
-	/*
-
-	size_t usernameLocationTag = inLine.find("<span class=chatlog__author");
-	if (usernameLocationTag == -1) 
-	{
-		std::cout << "Not a discord message" << std::endl;
-		return;
-	}
-
-	size_t userNameLocationStart = inLine.find(">", usernameLocationTag) +1;
-	size_t userNameLocationEnd = inLine.find("<", userNameLocationStart);
-	std::string userName = inLine.substr(userNameLocationStart, userNameLocationEnd - userNameLocationStart);
-
-	size_t dateTimeTag = inLine.find("<span class=chatlog__timestamp");
-	size_t dateTimeStart = inLine.find("title=\"", dateTimeTag)+7;
-	size_t dateTimeEnd = inLine.find("\">", dateTimeStart);
-	std::string dateTime = inLine.substr(dateTimeStart, dateTimeEnd - dateTimeStart);
-
-
-	std::string postContent;
-	size_t postContentTag = inLine.find("<span class=chatlog__markdown-preserve");
-	if (postContentTag == -1) 
-	{
-		//then we just look for images instead, this is probably an image post
-		postContentTag = inLine.find("<div class=chatlog__attachment");
-		if (postContentTag == -1) 
-		{
-			//We're deep in the iffs, but I'm just bug hunting at this point
-			size_t postGifTag = inLine.find("class=chatlog__embed");
-			if (postGifTag == -1) 
-			{
-				std::cout << "Not a discord message" << std::endl;
-				std::cout << userName << std::endl;
-				std::cout << dateTime << std::endl;
-				return;
-
-			}
-			else 
-			{
-				size_t postContentStart = inLine.find("<source src=", postGifTag);
-				size_t postContentEnd = inLine.find("alt", postContentStart);
-				std::string postContent = inLine.substr(postContentStart+12, postContentEnd-1-(postContentStart+12));
-				currentPost = image;
-			}
-
-			
-		}
-		else 
-		{
-			size_t postContentStart = inLine.find(">", postContentTag + 1);
-			size_t postContentEnd = inLine.find("</div>");
-			currentPost = image;
-		}
-	}
-	else 
-	{
-		size_t postContentStart = inLine.find(">", postContentTag) + 1;
-		size_t postContentEnd = inLine.find("</span>", postContentStart);
-
-		postContent = inLine.substr(postContentStart, postContentEnd - postContentStart);
-	}
-
-
-	//then we need to decide post type based on post Content
-	if (postContent.find("https") != -1 && currentPost == text)
-	{
-		currentPost = link;
-	}
-
-
-	DiscordMessage* insertMessage = new DiscordMessage(userName, dateTime, postContent, currentChannel, currentPost);
-
-	int postReactionTagStart = inLine.find("class=chatlog__reaction");
-	if (postReactionTagStart != -1)
-	{
-
-		size_t postReactionTag = 0; 
-		postReactionTag = inLine.find("title", postReactionTagStart + 1 + postReactionTag);
-		while (postReactionTag != -1)
-		{
-			
-			//for each reaction, we need a name, and a count. 
-			size_t postReactionStart = inLine.find("=", postReactionTag);
-			size_t postReactionEnd = inLine.find(">", postReactionStart);
-			std::string reactionToAdd = inLine.substr(postReactionStart+1, postReactionEnd - (postReactionStart+1));
-
-			//then we need to find count
-
-			size_t postCountTag = inLine.find("count", postReactionEnd);
-			size_t postCountStart = inLine.find(">", postCountTag);
-			size_t postCountEnd = inLine.find("<");
-			std::string postCountString = inLine.substr(postCountStart + 1, postCountEnd - (postCountStart + 1));
-
-			int postCountNum = stoi(postCountString);
-
-			for (int i = 0; i<postCountNum; i++) 
-			{
-				//add reaction to this post
-				insertMessage->addReactions(reactionToAdd);
-			}
-
-			postReactionTag = inLine.find("title", postReactionTagStart + 1 + postReactionTag);
-
-		}
-
-	}
+	insertMessage->userName = messageUserName;
+	insertMessage->dateTime = messageDateTime;
+	insertMessage->postContent = messageContent;
+	insertMessage->postType = currentPost;
 
 	allMessages.push_back(insertMessage);
-
-	*/
-
 
 
 }
@@ -276,9 +263,37 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 			returnTagType = messageReactionTag;
 			return returnTagType;
 		}
-		else if (className == "")
+		else if (className == "chatlog__reply-author")
 		{
-
+			returnTagType = ignoreNextTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__short-timestamp")
+		{
+			returnTagType = ignoreNextTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__message-group" || 
+			className == "chatlog__message-container" || className == "chatlog__message" ||
+			className == "chatlog__message-aside" || className == "chatlog__reply-symbol" ||
+			className == "chatlog__message-primary" || className == "chatlog__reply" ||
+			className == "chatlog__reply-content" || className == "chatlog__header" ||
+			className == "\"chatlog__content" || className == "chatlog__attachment" ||
+			className == "chatlog__reactions" || className == "chatlog__embed" || 
+			className == "chatlog__reply-unknown" || className == "\"chatlog__message-container" ||
+			className == "\"chatlog__embed-color-pill" || className == "chatlog__embed-content-container" ||
+			className == "chatlog__embed-content" || className == "chatlog__embed-text" ||
+			className == "chatlog__embed-title" || className == "chatlog__embed-color-pill" ||
+			className == "chatlog__embed-author-container" || className == "chatlog__embed-spotify-container" ||
+			className == "chatlog__embed-footer" || className == "chatlog__markdown-quote-content")
+		{
+			return returnTagType;
+		}
+		else 
+		{
+			std::cout << "Unrecognized Div Class: ";
+			std::cout << inHTMLTag << std::endl;
+			//there are a lot of div classes, and we can probably ignore most of them. 
 		}
 
 	}
@@ -313,11 +328,11 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 		}
 		else
 		{
-			std::cout << "span with no class, seems wrong" << std::endl;
+			//std::cout << "span with no class, seems wrong" << std::endl;
 			return returnTagType;
 		}
 
-		if (className == "chatlog__markdown - preserve")
+		if (className == "chatlog__markdown-preserve")
 		{
 			returnTagType = messageTextTag;
 			return returnTagType;
@@ -335,7 +350,37 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 		else if (className == "chatlog__reaction-count")
 		{
 			returnTagType = messageReactionCountTag;
-			returnTagType;
+			return returnTagType;
+		}
+		else if (className == "chatlog__edited-timestamp")
+		{
+			returnTagType = ignoreNextTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__reply-link")
+		{
+			returnTagType = ignoreNextTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__reply-edited-timestamp") 
+		{
+			returnTagType = ignoreNextTag;
+			return returnTagType;
+		}
+		else if (className == "\"chatlog__markdown-mention\"" || className == "chatlog__markdown-mention")
+		{
+			returnTagType = mentionTag;
+			return returnTagType;
+		}
+		else if (className == "\"chatlog__markdown-spoiler")
+		{
+			returnTagType = messageTextTag;
+			return returnTagType;
+		}
+		else 
+		{
+			std::cout << "unrecognized Span class" << std::endl;
+
 		}
 
 	}
@@ -351,9 +396,10 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 
 	if (inHTMLTag.find("<a") != -1) 
 	{
-		returnTagType = ignoreTag;
+		returnTagType = messageTextTag;
 		//Atags do not have a class
 		tagStack.push_back(inHTMLTag);
+		return returnTagType;
 	}
 	if (inHTMLTag.find("</a>") != -1 && inHTMLTag.size() == 4)
 	{
@@ -362,13 +408,153 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 		{
 			tagStack.pop_back(); //if we are currently on an a tag, we can pop that tag off of the stack. 
 		}
+		return returnTagType;
 	}
 
 	if (inHTMLTag.find("<img") != -1)
 	{
 		//this is not one we have to put on our stack
-		returnTagType = messageImageTag;
+		size_t classStart = inHTMLTag.find("class=");
+		size_t classEnd = inHTMLTag.find(" ", classStart);
+		size_t classEnd2 = inHTMLTag.find(">", classStart);
+
+		if (classEnd != -1)
+		{
+			className = inHTMLTag.substr(classStart + 6, classEnd - (classStart + 6));
+		}
+		else if (classEnd2 != -1)
+		{
+			className = inHTMLTag.substr(classStart + 6, classEnd2 - (classStart + 6));
+		}
+		else
+		{
+			std::cout << "img with no class, seems wrong" << std::endl;
+			return returnTagType;
+		}
+
+		if (className == "chatlog__attachment-media")
+		{
+			returnTagType = messageImageTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__avatar") 
+		{
+			returnTagType = ignoreTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__reply-avatar")
+		{
+			returnTagType = ignoreTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__emoji chatlog__emoji--small") 
+		{
+			returnTagType = ignoreTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__emoji" || className == "\"chatlog__emoji")
+		{
+			returnTagType = ignoreTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__embed-generic-image")
+		{
+			returnTagType = messageImageTag;
+			return returnTagType;
+		}
+		else 
+		{
+			std::cout << "unrecognized Image class" << std::endl;
+		}
+
+
+	}
+
+	if (inHTMLTag.find("<video") != -1)
+	{
+		tagStack.push_back(inHTMLTag);
+		size_t classStart = inHTMLTag.find("class=");
+		size_t classEnd = inHTMLTag.find(" ", classStart);
+		size_t classEnd2 = inHTMLTag.find(">", classStart);
+
+		if (classEnd != -1)
+		{
+			className = inHTMLTag.substr(classStart + 6, classEnd - (classStart + 6));
+		}
+		else if (classEnd2 != -1)
+		{
+			className = inHTMLTag.substr(classStart + 6, classEnd2 - (classStart + 6));
+		}
+		else
+		{
+			std::cout << "img with no class, seems wrong" << std::endl;
+			return returnTagType;
+		}
+
+		if (className == "chatlog__attachment-media")
+		{
+			returnTagType = messageImageTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__embed-generic-video")
+		{
+			returnTagType = messageImageTag;
+			return returnTagType;
+
+		}
+		else if (className == "chatlog__embed-generic-gifv") 
+		{
+			returnTagType = messageImageTag;
+			return returnTagType;
+		}
+
+
+	}
+
+	if (inHTMLTag.find("</video") != -1)
+	{
+		returnTagType = ignoreTag;
+		if (tagStack.at(tagStack.size() - 1).find("<video") != -1)
+		{
+			tagStack.pop_back(); //if we are currently on an a tag, we can pop that tag off of the stack. 
+		}
 		return returnTagType;
+
+	}
+
+	if (inHTMLTag.find("<em") != -1) 
+	{
+		tagStack.push_back(inHTMLTag);
+		returnTagType = messageTextTag;
+		return returnTagType;
+	}
+
+	if (inHTMLTag.find("</em") != -1) 
+	{
+		returnTagType = ignoreTag;
+		if (tagStack.at(tagStack.size() - 1).find("<em") != -1)
+		{
+			tagStack.pop_back(); //if we are currently on an a tag, we can pop that tag off of the stack. 
+		}
+		return returnTagType;
+	}
+
+	if (inHTMLTag.find("<iframe") != -1)
+	{
+		tagStack.push_back(inHTMLTag);
+		returnTagType = ignoreTag;
+		return returnTagType;
+	}
+
+	if (inHTMLTag.find("</iframe") != -1)
+	{
+		returnTagType = ignoreTag;
+		if (tagStack.at(tagStack.size() - 1).find("<iframe") != -1)
+		{
+			tagStack.pop_back(); //if we are currently on an a tag, we can pop that tag off of the stack. 
+		}
+		return returnTagType;
+
 	}
 
 
