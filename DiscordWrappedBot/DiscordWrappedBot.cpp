@@ -44,7 +44,7 @@ int main(int argc, char** argv)
                     {
                         chanelLocation = line.find("<div class=preamble__entry>", chanelLocation+1);
                         //make substring of this line, and send this to stats object
-                        int chanelLocationEnd = line.find("</div>", chanelLocation);
+                        size_t chanelLocationEnd = line.find("</div>", chanelLocation);
                         std::string channelFound = line.substr(chanelLocation+27, chanelLocationEnd-(chanelLocation+27));
                         myStats->changeChannel(channelFound);
                     }
@@ -73,6 +73,10 @@ int main(int argc, char** argv)
         }
 
     }
+
+    myStats->parseTypes();
+    myStats->filterYear(2023);
+    myStats->printResults();
 
     //steps:
     /*

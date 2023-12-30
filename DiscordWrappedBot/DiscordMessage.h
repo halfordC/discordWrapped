@@ -20,9 +20,10 @@ public:
 	std::string postContent;
 	std::string channelPosted;
 	postType_t postType;
+	std::vector<std::string> postReactions;
 
 private:
 
-	std::vector<std::string> postReactions;
+	
 };
 

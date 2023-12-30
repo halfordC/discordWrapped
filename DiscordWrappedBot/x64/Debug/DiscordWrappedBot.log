@@ -1,3 +1,2 @@
 ﻿  DiscordServerStats.cpp
-C:\Files\repos\DiscordWrapped\discordWrapped\DiscordWrappedBot\DiscordServerStats.cpp(53,7): warning C4101: 'j': unreferenced local variable
-  DiscordWrappedBot.vcxproj -> C:\Files\repos\DiscordWrapped\discordWrapped\x64\Debug\DiscordWrappedBot.exe
+  DiscordWrappedBot.vcxproj -> F:\Files\Repos\DiscordWrappedBot\x64\Debug\DiscordWrappedBot.exe

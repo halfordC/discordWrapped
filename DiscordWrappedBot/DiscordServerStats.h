@@ -1,5 +1,7 @@
 #pragma once
 #include "DiscordMessage.h"
+#include <unordered_map>
+#include <map>
 
 typedef enum 
 {
@@ -12,6 +14,7 @@ typedef enum
 	unknownTag,
 	ignoreTag,
 	ignoreNextTag,
+	ignoreUntilPop,
 	mentionTag,
 }tagType;
 
@@ -25,20 +28,15 @@ public:
 	void addMessage(std::string inLine); //we'll do all of our line parsing in here. 
 	void changeChannel(std::string inChannel);
 	std::string getHtmlTag(std::string inHTMLBlock);
-	tagType processTag(std::string inHTMLTag);
+	tagType processTag(std::string inHTMLTag, bool igUPopFlag);
 
+	void parseTypes();
+	void sortMap(std::vector<std::string> *users, std::vector<int> *values, std::unordered_map<std::string, int> inputMap);
 private:
 	std::vector<DiscordMessage*> allMessages;
-	std::vector<DiscordMessage*> allCurrentYear;
-	std::vector<std::string> top10Posters;
-	std::vector<std::string> top5HCMusicPosters;
-	std::vector<std::string> top5MusicPosters;
-	std::vector<std::string> promoterWithMostFlyers; //promoters have a specific color name
-	std::vector<DiscordMessage*> top3ReactedMessages;
-	std::vector<std::string> top3MemeLords;
-	std::vector<std::string> top3Reactions;
 
 	std::string currentChannel;
 	std::vector<std::string> tagStack;
+	std::string findClassName(std::string inHtmlTag);
 };
 

@@ -5,12 +5,229 @@ DiscordServerStats::DiscordServerStats()
 	currentChannel = "no Channel";
 }
 
+
+
 void DiscordServerStats::filterYear(int inYear)
 {
+	for (int i = 0; i<allMessages.size(); i++) 
+	{
+		std::string dateTime = allMessages[i]->dateTime;
+
+		if (dateTime.find(std::to_string(inYear)) == -1)
+		{
+			allMessages.erase(allMessages.begin() + i);
+			i = i - 1;
+		}
+	}
+
 }
 
 void DiscordServerStats::printResults()
 {
+	/*
+	* List of things we'd like to print:
+	* - Total Posts
+	* - Music Posted in music channels
+	* - Show Flyers Posted in flyer channels
+	* - Total Memes Posted
+	* - Biggest Poster -> Top 10
+	* - Most HC music posted -> top 5
+	* - Most music posted -> top 5
+	* - Promoter posting the most flyers -> single person
+	* - Most reacted Post -> Top 3
+	* - Most memes posted -> Top 3
+	* - Most used Emojis -> top 3
+	*/
+
+	std::cout << "Total Posts in 2023: ";
+	std::cout << allMessages.size() << std::endl;
+
+	std::unordered_map<std::string, int> topPosters;
+	std::vector<std::string> topPostersUsers;
+	std::vector<int> topPostersValues;
+	std::unordered_map<std::string, int> topHCMusicPosters;
+	std::vector<std::string> topHCMusicPostersUsers;
+	std::vector<int> topHCMusicPostersValues;
+	std::unordered_map<std::string, int> topMusicPosters;
+	std::vector<std::string> topMusicPostersUsers;
+	std::vector<int> topMusicPostersValues;
+	std::unordered_map<std::string, int> mostFlyers;
+	std::vector<std::string> mostFlyersUsers;
+	std::vector<int> mostFlyersValues;
+	std::unordered_map<std::string, int> biggestMemers;
+	std::vector<std::string> biggestMemersUsers;
+	std::vector<int> biggestMemersValues;
+	std::unordered_map<std::string, int> mostUsedEmojis;
+	std::vector<std::string> mostUsedEmojisUsers;
+	std::vector<int> mostUsedEmojisValues;
+
+
+	DiscordMessage* mostReactedPost;
+	int postReactionNumber = 0;
+
+	int musicPosted = 0;
+	int flyersPosted = 0;
+	int memesPosted = 0;
+	int totalReactions = 0;
+
+
+	for (int i = 0; i < allMessages.size(); i++)
+	{
+		//topPosters Section
+		std::string userName = allMessages[i]->userName;
+		if (topPosters.find(userName) == topPosters.end())
+		{
+			topPosters.emplace(userName, 1);
+		}
+		else
+		{
+			topPosters.at(userName) = topPosters.at(userName) + 1; // I do not trust ++ with maps. 
+		}
+
+		//Emoji section
+		int totalPostReactions = 0;
+		for (int j = 0; j < allMessages[i]->postReactions.size(); j++)
+		{
+			totalReactions++;
+			totalPostReactions++;
+
+			if (mostUsedEmojis.find(allMessages[i]->postReactions[j]) == mostUsedEmojis.end())
+			{
+				mostUsedEmojis.emplace(allMessages[i]->postReactions[j], 1);
+			}
+			else
+			{
+				mostUsedEmojis.at(allMessages[i]->postReactions[j]) = mostUsedEmojis.at(allMessages[i]->postReactions[j]) + 1;
+			}
+
+			if (totalPostReactions > postReactionNumber)
+			{
+				totalPostReactions = postReactionNumber;
+				mostReactedPost = allMessages[i];
+			}
+		}
+
+		//musicSection
+		if ((allMessages[i]->channelPosted == "Music / everything-else" || allMessages[i]->channelPosted == "Music / hardcore-for-hardcore")
+			&& allMessages[i]->postType == link)
+		{
+			musicPosted++;
+
+			if (topMusicPosters.find(allMessages[i]->userName) == topMusicPosters.end())
+			{
+				topMusicPosters.emplace(allMessages[i]->userName, 1);
+			}
+			else
+			{
+				topMusicPosters.at(allMessages[i]->userName) = topMusicPosters.at(allMessages[i]->userName) + 1;
+			}
+
+			if (allMessages[i]->channelPosted == "Music / hardcore-for-hardcore")
+			{
+				if (topHCMusicPosters.find(allMessages[i]->userName) == topHCMusicPosters.end())
+				{
+					topHCMusicPosters.emplace(allMessages[i]->userName, 1);
+				}
+				else
+				{
+					topHCMusicPosters.at(allMessages[i]->userName) = topHCMusicPosters.at(allMessages[i]->userName) + 1;
+				}
+
+
+			}
+
+
+		}
+
+		//memes
+		if (allMessages[i]->channelPosted == "General / memes" && allMessages[i]->postType == image)
+		{
+			memesPosted++;
+			if (biggestMemers.find(allMessages[i]->userName) == biggestMemers.end())
+			{
+				biggestMemers.emplace(allMessages[i]->userName, 1);
+			}
+			else
+			{
+				biggestMemers.at(allMessages[i]->userName) = biggestMemers.at(allMessages[i]->userName) + 1;
+			}
+
+		}
+
+		//flyers
+		if (allMessages[i]->channelPosted == "Shows / show-announcements" || allMessages[i]->channelPosted == "Shows / non-hc-shows")
+		{
+			flyersPosted++;
+			if (mostFlyers.find(allMessages[i]->userName) == mostFlyers.end())
+			{
+				mostFlyers.emplace(allMessages[i]->userName, 1);
+			}
+			else
+			{
+				mostFlyers.at(allMessages[i]->userName) = mostFlyers.at(allMessages[i]->userName) + 1;
+			}
+
+		}
+	}
+
+
+
+	std::cout << "Total Flyers posted in flyer channels: ";
+	std::cout << flyersPosted << std::endl;
+
+	std::cout << "Total Music posted in music channels: ";
+	std::cout << musicPosted << std::endl;
+
+	std::cout << "Total Memes posted in the meme channel: ";
+	std::cout << memesPosted << std::endl;
+
+	std::cout << "Total Serverwide Reactions: ";
+	std::cout << totalReactions << std::endl;
+
+	sortMap(&topPostersUsers, &topPostersValues, topPosters);
+	sortMap(&topHCMusicPostersUsers, &topHCMusicPostersValues, topHCMusicPosters);
+	sortMap(&topMusicPostersUsers, &topMusicPostersValues, topMusicPosters);
+	sortMap(&mostFlyersUsers, &mostFlyersValues, mostFlyers);
+	sortMap(&biggestMemersUsers, &biggestMemersValues, biggestMemers);
+	sortMap(&mostUsedEmojisUsers, &mostUsedEmojisValues, mostUsedEmojis);
+
+	std::cout << "The top 10 highest posters this year:" << std::endl;
+	for (int i = 0; i < 10; i++)
+	{
+		std::cout << (i + 1) << ": " << topPostersUsers[i] << " with " << topPostersValues[i] << " posts!" << std::endl;
+	}
+
+	std::cout << "The top 5 highest Hardcore music posters this year:" << std::endl;
+	for (int i = 0; i < 5; i++)
+	{
+		std::cout << (i + 1) << ": " << topHCMusicPostersUsers[i] << " with " << topHCMusicPostersValues[i] << " posts!" << std::endl;
+	}
+
+	std::cout << "The top 5 highest overall music posters this year:" << std::endl;
+	for (int i = 0; i < 5; i++)
+	{
+		std::cout << (i + 1) << ": " << topMusicPostersUsers[i] << " with " << topMusicPostersValues[i] << " posts!" << std::endl;
+	}
+
+	std::cout << "The top 3 users who posted the most flyers (all show channels): " << std::endl;
+	for (int i = 0; i < 3; i++)
+	{
+		std::cout << (i + 1) << ": " << mostFlyersUsers[i] << " with " << mostFlyersValues[i] << " flyers!" << std::endl;
+	}
+
+	std::cout << "The biggest pair of meme-ers:";
+	std::cout << biggestMemersUsers[0] << " and " << biggestMemersUsers[1] << " , with " << biggestMemersValues[0] << " and " << biggestMemersValues[1] << " memes, respectivley." << std::endl;
+
+	std::cout << "The top 3 most used reactions of 2023 were: " << std::endl;
+	for (int i = 0; i<3; i++) 
+	{
+		std::cout << (i + 1) << " :" << mostUsedEmojisUsers[i] << ", reacted " << mostUsedEmojisValues[i] << " times." << std::endl;
+
+	}
+
+
+
+
 }
 
 void DiscordServerStats::addMessage(std::string inLine)
@@ -47,10 +264,9 @@ void DiscordServerStats::addMessage(std::string inLine)
 		}
 
 
-		tagType currentTagType = processTag(currentTag);
+		tagType currentTagType = processTag(currentTag, false);
 
 
-		int j;
 		switch (currentTagType) 
 		{
 		case usernameTag:
@@ -76,13 +292,13 @@ void DiscordServerStats::addMessage(std::string inLine)
 			if (catString == "</a>") 
 			{
 				//if we see an Atag, there may be a link in it that is part of a message. 
-				processTag(catString);
+				processTag(catString, false);
 				break;
 			}
 			else if (catString.find("<span") != -1)
 			{
 				//This is a mention in a message. 
-				tagType possibleMention = processTag(catString);
+				tagType possibleMention = processTag(catString, false);
 				if (possibleMention == mentionTag) 
 				{
 					tagSize = catString.size();
@@ -90,6 +306,15 @@ void DiscordServerStats::addMessage(std::string inLine)
 					catString = getHtmlTag(inLine);
 				}
 
+			}
+			else if (currentTag.find("chatlog__sticker") != -1)
+			{
+				//this is a sticker. We still want to capture it as a post.
+				size_t stickerLocation = currentTag.find("title=");
+				size_t stickerEnd = currentTag.find(">");
+				std::string stickerName = currentTag.substr(stickerLocation + 6, stickerEnd - (stickerLocation + 6));
+				messageContent = messageContent + " " + stickerName;
+				break;
 			}
 			messageContent = messageContent + " " + catString;
 			tagSize = catString.size();
@@ -154,6 +379,20 @@ void DiscordServerStats::addMessage(std::string inLine)
 			}
 			break;
 
+		case ignoreUntilPop: 
+		{
+			size_t tagStackSize = tagStack.size();
+			while (tagStack.size() > (tagStackSize-1)) 
+			{
+				std::string nextTag = getHtmlTag(inLine);
+				tagSize = nextTag.size();
+				tagType tossTag = processTag(nextTag, true);
+				inLine = inLine.substr(tagSize, inLine.size() - tagSize);
+
+			}
+		}
+			break;
+
 		case unknownTag:
 			if (tagStack.back() == "<span class=chatlog__markdown-preserve>")
 			{
@@ -189,6 +428,7 @@ void DiscordServerStats::addMessage(std::string inLine)
 	insertMessage->dateTime = messageDateTime;
 	insertMessage->postContent = messageContent;
 	insertMessage->postType = currentPost;
+	insertMessage->channelPosted = currentChannel;
 
 	allMessages.push_back(insertMessage);
 
@@ -219,7 +459,7 @@ std::string DiscordServerStats::getHtmlTag(std::string inHTMLBlock)
 	return returnString;
 }
 
-tagType DiscordServerStats::processTag(std::string inHTMLTag)
+tagType DiscordServerStats::processTag(std::string inHTMLTag, bool igUPopFlag)
 {
 	/*Tags that we should stack monitor:
 	* Div
@@ -231,65 +471,68 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 	* 
 	*/
 	tagType returnTagType = unknownTag;
-	std::string className;
+	std::string className = findClassName(inHTMLTag);
 	//Div section handeled. 
 	if (inHTMLTag.find("<div") != -1) 
 	{
 		returnTagType = ignoreTag;
 		tagStack.push_back(inHTMLTag);
-
 		//now we need to find the class, and base what we do off of that. 
 
-		size_t classStart = inHTMLTag.find("class=");
-		size_t classEnd = inHTMLTag.find(" ", classStart);
-		size_t classEnd2 = inHTMLTag.find(">", classStart);
-		
-		if (classEnd != -1) 
-		{
-			className = inHTMLTag.substr(classStart + 6, classEnd - (classStart + 6));
-		}
-		else if (classEnd2 != -1) 
-		{
-			className = inHTMLTag.substr(classStart + 6, classEnd2 - (classStart + 6));
-		}
-		else 
-		{
-			std::cout << "div with no class, seems wrong" << std::endl;
-			return returnTagType;
-		}
-
-		if (className == "chatlog__reaction") 
+		if (className == "chatlog__reaction")
 		{
 			returnTagType = messageReactionTag;
 			return returnTagType;
 		}
-		else if (className == "chatlog__reply-author")
-		{
-			returnTagType = ignoreNextTag;
-			return returnTagType;
-		}
-		else if (className == "chatlog__short-timestamp")
-		{
-			returnTagType = ignoreNextTag;
-			return returnTagType;
-		}
-		else if (className == "chatlog__message-group" || 
+		else if (className == "chatlog__message-group" ||
 			className == "chatlog__message-container" || className == "chatlog__message" ||
 			className == "chatlog__message-aside" || className == "chatlog__reply-symbol" ||
-			className == "chatlog__message-primary" || className == "chatlog__reply" ||
+			className == "chatlog__message-primary" ||
 			className == "chatlog__reply-content" || className == "chatlog__header" ||
 			className == "\"chatlog__content" || className == "chatlog__attachment" ||
-			className == "chatlog__reactions" || className == "chatlog__embed" || 
+			className == "chatlog__reactions" || className == "chatlog__sticker--media" ||
 			className == "chatlog__reply-unknown" || className == "\"chatlog__message-container" ||
 			className == "\"chatlog__embed-color-pill" || className == "chatlog__embed-content-container" ||
 			className == "chatlog__embed-content" || className == "chatlog__embed-text" ||
 			className == "chatlog__embed-title" || className == "chatlog__embed-color-pill" ||
 			className == "chatlog__embed-author-container" || className == "chatlog__embed-spotify-container" ||
-			className == "chatlog__embed-footer" || className == "chatlog__markdown-quote-content")
+			className == "chatlog__embed-footer" || className == "chatlog__markdown-quote-content" ||
+			className == "chatlog__embed-youtube-container" || className == "chatlog__attachment-generic" ||
+			className == "chatlog__attachment" || className == "chatlog__attachment-generic-name" ||
+			className == "chatlog__attachment-generic-size" || className == "\"chatlog__attachment")
 		{
 			return returnTagType;
 		}
-		else 
+		else if (className == "chatlog__markdown")
+		{
+			returnTagType = ignoreNextTag;
+			return returnTagType;
+		}
+		else if (className == "chatlog__embed" || className == "chatlog__short-timestamp" ||
+			className == "chatlog__reply" || className == "chatlog__attachment-spoiler-caption")
+		{
+			returnTagType = ignoreUntilPop;
+			return returnTagType;
+
+		}
+		else if (className == "\"chatlog__markdown-quote\"" || className == "\"chatlog__markdown-quote-border\"" ||
+			className == "\"chatlog__markdown-quote-content\"")
+		{
+			returnTagType = ignoreUntilPop; //for debugging
+			return returnTagType;
+		}
+		else if (className == "chatlog__sticker")
+		{
+			returnTagType = messageTextTag;
+			return returnTagType;
+
+		}
+		else if (className == "noClass" && igUPopFlag == false)
+		{
+			std::cout << "Div with no class name: ";
+			std::cout << inHTMLTag << std::endl;
+		}
+		else if (igUPopFlag == false)
 		{
 			std::cout << "Unrecognized Div Class: ";
 			std::cout << inHTMLTag << std::endl;
@@ -305,6 +548,7 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 		{
 			tagStack.pop_back(); //if we are currently on a div tag, we can pop that tag off of the stack. 
 		}
+		return returnTagType;
 	}
 
 
@@ -313,24 +557,6 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 	{
 		returnTagType = ignoreTag;
 		tagStack.push_back(inHTMLTag);
-
-		size_t classStart = inHTMLTag.find("class=");
-		size_t classEnd = inHTMLTag.find(" ", classStart);
-		size_t classEnd2 = inHTMLTag.find(">", classStart);
-
-		if (classEnd != -1)
-		{
-			className = inHTMLTag.substr(classStart + 6, classEnd - (classStart + 6));
-		}
-		else if (classEnd2 != -1)
-		{
-			className = inHTMLTag.substr(classStart + 6, classEnd2 - (classStart + 6));
-		}
-		else
-		{
-			//std::cout << "span with no class, seems wrong" << std::endl;
-			return returnTagType;
-		}
 
 		if (className == "chatlog__markdown-preserve")
 		{
@@ -377,9 +603,21 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 			returnTagType = messageTextTag;
 			return returnTagType;
 		}
-		else 
+		else if (className.find("system-notification") != -1)
 		{
-			std::cout << "unrecognized Span class" << std::endl;
+			returnTagType = ignoreUntilPop;
+			return returnTagType;
+		}
+		else if (className == "noClass" || className == "chatlog__author-tag")
+		{
+			returnTagType = ignoreUntilPop;
+			return returnTagType;
+
+		}
+		else if (!igUPopFlag)
+		{
+			std::cout << "unrecognized Span class: ";
+			std::cout << inHTMLTag << std::endl;
 
 		}
 
@@ -392,14 +630,19 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 		{
 			tagStack.pop_back(); //if we are currently on a span tag, we can pop that tag off of the stack. 
 		}
+		return returnTagType;
 	}
 
 	if (inHTMLTag.find("<a") != -1) 
 	{
-		returnTagType = messageTextTag;
-		//Atags do not have a class
 		tagStack.push_back(inHTMLTag);
-		return returnTagType;
+		if (className == "noClass") 
+		{
+			//an a tag with no class is a link in a message, An A tag with a class is part of an embed. 
+			returnTagType = messageTextTag;
+			return returnTagType;
+		}
+;
 	}
 	if (inHTMLTag.find("</a>") != -1 && inHTMLTag.size() == 4)
 	{
@@ -414,45 +657,14 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 	if (inHTMLTag.find("<img") != -1)
 	{
 		//this is not one we have to put on our stack
-		size_t classStart = inHTMLTag.find("class=");
-		size_t classEnd = inHTMLTag.find(" ", classStart);
-		size_t classEnd2 = inHTMLTag.find(">", classStart);
-
-		if (classEnd != -1)
-		{
-			className = inHTMLTag.substr(classStart + 6, classEnd - (classStart + 6));
-		}
-		else if (classEnd2 != -1)
-		{
-			className = inHTMLTag.substr(classStart + 6, classEnd2 - (classStart + 6));
-		}
-		else
-		{
-			std::cout << "img with no class, seems wrong" << std::endl;
-			return returnTagType;
-		}
-
 		if (className == "chatlog__attachment-media")
 		{
 			returnTagType = messageImageTag;
 			return returnTagType;
 		}
-		else if (className == "chatlog__avatar") 
-		{
-			returnTagType = ignoreTag;
-			return returnTagType;
-		}
-		else if (className == "chatlog__reply-avatar")
-		{
-			returnTagType = ignoreTag;
-			return returnTagType;
-		}
-		else if (className == "chatlog__emoji chatlog__emoji--small") 
-		{
-			returnTagType = ignoreTag;
-			return returnTagType;
-		}
-		else if (className == "chatlog__emoji" || className == "\"chatlog__emoji")
+		else if (className == "chatlog__avatar" || className == "chatlog__reply-avatar" ||
+			className == "chatlog__emoji chatlog__emoji--small" || className == "chatlog__emoji" || 
+			className == "\"chatlog__emoji" || className == "chatlog__sticker--media")
 		{
 			returnTagType = ignoreTag;
 			return returnTagType;
@@ -462,34 +674,24 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 			returnTagType = messageImageTag;
 			return returnTagType;
 		}
-		else 
+		else if (className  == "noClass")
 		{
-			std::cout << "unrecognized Image class" << std::endl;
+			std::cout << "img with no class, seems wrong" << std::endl;
+			return returnTagType;
 		}
+		else if (!igUPopFlag)
+		{
+			std::cout << "unrecognized Image class: ";
+			std::cout << inHTMLTag << std::endl;
 
+		}
 
 	}
 
 	if (inHTMLTag.find("<video") != -1)
 	{
 		tagStack.push_back(inHTMLTag);
-		size_t classStart = inHTMLTag.find("class=");
-		size_t classEnd = inHTMLTag.find(" ", classStart);
-		size_t classEnd2 = inHTMLTag.find(">", classStart);
-
-		if (classEnd != -1)
-		{
-			className = inHTMLTag.substr(classStart + 6, classEnd - (classStart + 6));
-		}
-		else if (classEnd2 != -1)
-		{
-			className = inHTMLTag.substr(classStart + 6, classEnd2 - (classStart + 6));
-		}
-		else
-		{
-			std::cout << "img with no class, seems wrong" << std::endl;
-			return returnTagType;
-		}
+		
 
 		if (className == "chatlog__attachment-media")
 		{
@@ -557,7 +759,114 @@ tagType DiscordServerStats::processTag(std::string inHTMLTag)
 
 	}
 
+	if (inHTMLTag.find("<svg") != -1)
+	{
+		if (className == "chatlog__system-notification-icon")
+		{
+			returnTagType = ignoreUntilPop;
+			return returnTagType;
+
+		}
+
+	}
+
+	if (inHTMLTag.find("</svg") != 1)
+	{
+		returnTagType = ignoreTag;
+		if (tagStack.at(tagStack.size() - 1).find("<svg") != -1)
+		{
+			tagStack.pop_back(); 
+		}
+		return returnTagType;
+
+	}
+
 
 
 	return returnTagType;
+}
+
+void DiscordServerStats::parseTypes()
+{
+	for (int i = 0; i < allMessages.size(); i++)
+	{
+		std::string parseString = allMessages[i]->postContent;
+
+		if (parseString.find(".jpg") != -1 || 
+			parseString.find(".png") != -1 ||
+			parseString.find(".tiff") != -1 ||
+			parseString.find(".gif") != -1)
+		{
+			allMessages[i]->postType = image;
+		}
+
+		if (parseString.find("youtube") != -1 ||
+			parseString.find("youtu.be") != -1 || 
+			parseString.find("bandcamp") != -1 || 
+			parseString.find("spotify") != -1 || 
+			parseString.find("itunes.apple") != -1 || 
+			parseString.find("soundcloud") != -1)
+		{
+			allMessages[i]->postType = link;
+		}
+
+	}
+
+}
+
+//I'm not brushed up on my sorting algorithms. Sorry mom. I'm an embedded FW engineer.
+void DiscordServerStats::sortMap(std::vector<std::string> *users, std::vector<int> *values, std::unordered_map<std::string, int> inputMap)
+{
+	for (auto i : inputMap) 
+	{
+		int inValue = i.second;
+		std::string user = i.first;
+
+		if (values->size() == 0) 
+		{
+			values->push_back(inValue);
+			users->push_back(user);
+			continue;
+		}
+		bool inserted = false;
+		for (int j=0; j<values->size(); j++) 
+		{
+			if (inValue > values->at(j))
+			{
+				inserted = true;
+				values->insert(values->begin()+j, inValue);
+				users->insert(users->begin() + j, user);
+				break;
+			}
+
+		}
+		if (!inserted) 
+		{
+			values->push_back(inValue);
+			users->push_back(user);
+		}
+	}
+}
+
+
+std::string DiscordServerStats::findClassName(std::string inHtmlTag)
+{
+	std::string className;
+	size_t classStart = inHtmlTag.find("class=");
+	size_t classEnd = inHtmlTag.find(" ", classStart);
+	size_t classEnd2 = inHtmlTag.find(">", classStart);
+
+	if (classEnd != -1)
+	{
+		className = inHtmlTag.substr(classStart + 6, classEnd - (classStart + 6));
+	}
+	else if (classEnd2 != -1)
+	{
+		className = inHtmlTag.substr(classStart + 6, classEnd2 - (classStart + 6));
+	}
+	else
+	{
+		className = "noClass";
+	}
+	return className;
 }
